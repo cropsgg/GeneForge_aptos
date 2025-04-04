@@ -1,0 +1,15 @@
+[package]
+name = "Geneforge"
+version = "0.1.0"
+authors = []
+
+[addresses]
+Geneforge = "_"
+
+[dev-addresses]
+Geneforge = "0x42"
+
+[dependencies]
+AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework/", rev = "a2a3bf58c5a5d1814c82fc3c3f7611ff3a553863" }
+
+[dev-dependencies] 
