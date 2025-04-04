@@ -1,33 +1,43 @@
-import { Types } from 'aptos';
+import { AptosClient, AptosAccount, Types } from 'aptos';
 import { IntellectualProperty } from './types';
+import { CONTRACT_ADDRESS, MODULE_NAMES, FUNCTIONS } from './config';
+import { createAptosClient, stringToBytes } from './aptos-client';
 
 export class IntellectualPropertyContract {
-  private client: Types.AptosClient;
+  private client: AptosClient;
   private contractAddress: string;
+  private moduleName: string;
 
-  constructor(nodeUrl: string, contractAddress: string) {
-    this.client = new Types.AptosClient(nodeUrl);
+  constructor(contractAddress: string = CONTRACT_ADDRESS) {
+    this.client = createAptosClient();
     this.contractAddress = contractAddress;
+    this.moduleName = MODULE_NAMES.INTELLECTUAL_PROPERTY;
   }
 
   async recordContribution(
-    signer: Types.AptosAccount,
+    signer: AptosAccount,
     title: string,
     description: string,
     role: string,
     contribution: string
   ): Promise<string> {
-    const payload: Types.TransactionPayload = {
-      type: "entry_function_payload",
-      function: `${this.contractAddress}::intellectual_property::record_contribution`,
+    const payload: Types.EntryFunctionPayload = {
+      function: `${this.contractAddress}::${this.moduleName}::${FUNCTIONS.REGISTER_CONTRIBUTION}`,
       type_arguments: [],
-      arguments: [title, description, role, contribution]
+      arguments: [
+        stringToBytes(title), 
+        stringToBytes(description), 
+        stringToBytes(role), 
+        stringToBytes(contribution)
+      ]
     };
 
     try {
-      const txnHash = await this.client.submitTransaction(signer, payload);
-      await this.client.waitForTransaction(txnHash);
-      return txnHash;
+      const rawTxn = await this.client.generateTransaction(signer.address(), payload);
+      const signedTxn = await this.client.signTransaction(signer, rawTxn);
+      const txnResult = await this.client.submitTransaction(signedTxn);
+      await this.client.waitForTransaction(txnResult.hash);
+      return txnResult.hash;
     } catch (error) {
       console.error('Error recording contribution:', error);
       throw error;
@@ -38,7 +48,7 @@ export class IntellectualPropertyContract {
     try {
       const resource = await this.client.getAccountResource(
         this.contractAddress,
-        `${this.contractAddress}::intellectual_property::Contribution`
+        `${this.contractAddress}::${this.moduleName}::Contribution`
       );
       
       return resource.data as IntellectualProperty;

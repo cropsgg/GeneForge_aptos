@@ -1,71 +1,68 @@
-import { Github, Twitter } from 'lucide-react';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { 
+  Github, 
+  Twitter, 
+  Linkedin, 
+  ArrowRight,
+  BookOpen,
+  FileText 
+} from 'lucide-react';
 
 export function Footer() {
   return (
-    <footer className="border-t">
-      <div className="container mx-auto px-4 py-8">
+    <footer className="bg-muted py-12 mt-auto border-t">
+      <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="space-y-4">
-            <h3 className="font-bold text-lg">BlockLab</h3>
-            <p className="text-sm text-muted-foreground">
-              Revolutionizing scientific research through blockchain technology
+          <div className="col-span-1 md:col-span-2">
+            <Link href="/" className="font-bold text-xl mb-4 block">
+              GeneForge
+            </Link>
+            <p className="text-muted-foreground mb-4 max-w-md">
+              Next-generation genomic research platform powered by blockchain technology for secure, transparent, and collaborative scientific work.
             </p>
             <div className="flex space-x-4">
-              <Link href="https://twitter.com" className="text-muted-foreground hover:text-primary">
-                <Twitter className="h-5 w-5" />
-              </Link>
-              <Link href="https://github.com" className="text-muted-foreground hover:text-primary">
+              <Button variant="ghost" size="icon" aria-label="GitHub">
                 <Github className="h-5 w-5" />
-              </Link>
+              </Button>
+              <Button variant="ghost" size="icon" aria-label="Twitter">
+                <Twitter className="h-5 w-5" />
+              </Button>
+              <Button variant="ghost" size="icon" aria-label="LinkedIn">
+                <Linkedin className="h-5 w-5" />
+              </Button>
             </div>
           </div>
           
           <div>
-            <h4 className="font-semibold mb-4">Platform</h4>
-            <ul className="space-y-2 text-sm">
+            <h3 className="font-medium mb-4">Platform</h3>
+            <ul className="space-y-2">
               <li>
-                <Link href="/experiments" className="text-muted-foreground hover:text-primary">
-                  Experiments
+                <Link href="/blockchain" className="text-muted-foreground hover:text-primary">
+                  Blockchain
                 </Link>
               </li>
               <li>
-                <Link href="/samples" className="text-muted-foreground hover:text-primary">
-                  Samples
-                </Link>
-              </li>
-              <li>
-                <Link href="/analytics" className="text-muted-foreground hover:text-primary">
-                  Analytics
+                <Link href="/" className="text-muted-foreground hover:text-primary">
+                  Features
                 </Link>
               </li>
             </ul>
           </div>
-
+          
           <div>
-            <h4 className="font-semibold mb-4">Resources</h4>
-            <ul className="space-y-2 text-sm">
+            <h3 className="font-medium mb-4">Resources</h3>
+            <ul className="space-y-2">
               <li>
-                <Link href="/docs" className="text-muted-foreground hover:text-primary">
+                <Link href="/documentation" className="text-muted-foreground hover:text-primary">
                   Documentation
                 </Link>
               </li>
               <li>
                 <Link href="/api" className="text-muted-foreground hover:text-primary">
-                  API Reference
+                  API
                 </Link>
               </li>
-              <li>
-                <Link href="/blog" className="text-muted-foreground hover:text-primary">
-                  Blog
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-semibold mb-4">Legal</h4>
-            <ul className="space-y-2 text-sm">
               <li>
                 <Link href="/privacy" className="text-muted-foreground hover:text-primary">
                   Privacy Policy
@@ -80,8 +77,20 @@ export function Footer() {
           </div>
         </div>
         
-        <div className="mt-8 pt-8 border-t text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} BlockLab. All rights reserved.</p>
+        <div className="border-t mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
+          <p className="text-muted-foreground text-sm">
+            © {new Date().getFullYear()} GeneForge. All rights reserved.
+          </p>
+          <div className="flex space-x-4 mt-4 md:mt-0">
+            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary flex items-center gap-2">
+              <BookOpen className="h-4 w-4" />
+              <span>Documentation</span>
+            </Button>
+            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              <span>Whitepaper</span>
+            </Button>
+          </div>
         </div>
       </div>
     </footer>

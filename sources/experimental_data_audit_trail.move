@@ -3,6 +3,9 @@ module Geneforge::ExperimentalDataAuditTrail {
     use std::signer;
     use aptos_framework::timestamp;
 
+    /// Error codes
+    const EXPERIMENT_NOT_FOUND: u64 = 1;
+
     /// Record for audit events in an experiment.
     struct HistoryRecord has copy, drop, store {
         event: vector<u8>, // e.g., "Submitted", "Updated"
@@ -26,7 +29,7 @@ module Geneforge::ExperimentalDataAuditTrail {
     }
 
     /// Initializes the experimental data registry.
-    public fun initialize_data_registry(account: &signer) {
+    public entry fun initialize_data_registry(account: &signer) {
         move_to(account, DataRegistry {
             experiments: vector::empty<ExperimentData>(),
             next_id: 0
@@ -34,13 +37,13 @@ module Geneforge::ExperimentalDataAuditTrail {
     }
 
     /// Submits a new experimental dataset.
-    public fun submit_experiment(account: &signer, data_hash: vector<u8>) acquires DataRegistry {
+    public entry fun submit_experiment(account: &signer, data_hash: vector<u8>) acquires DataRegistry {
         let registry = borrow_global_mut<DataRegistry>(signer::address_of(account));
         let experiment_id = registry.next_id;
         registry.next_id = experiment_id + 1;
 
         let initial_record = HistoryRecord {
-            event: b"Submitted".to_vec(),
+            event: b"Submitted",
             operator: signer::address_of(account),
             timestamp: timestamp::now_seconds(),
         };
@@ -57,7 +60,7 @@ module Geneforge::ExperimentalDataAuditTrail {
     }
 
     /// Updates an existing experimental dataset record.
-    public fun update_experiment(account: &signer, experiment_id: u64, new_data_hash: vector<u8>) acquires DataRegistry {
+    public entry fun update_experiment(account: &signer, experiment_id: u64, new_data_hash: vector<u8>) acquires DataRegistry {
         let registry = borrow_global_mut<DataRegistry>(signer::address_of(account));
         let exp_data = find_experiment_mut(&mut registry.experiments, experiment_id);
         // Only the owner can update the experiment record.
@@ -65,7 +68,7 @@ module Geneforge::ExperimentalDataAuditTrail {
         exp_data.version = exp_data.version + 1;
         exp_data.data_hash = new_data_hash;
         let update_record = HistoryRecord {
-            event: b"Updated".to_vec(),
+            event: b"Updated",
             operator: signer::address_of(account),
             timestamp: timestamp::now_seconds(),
         };
@@ -75,14 +78,15 @@ module Geneforge::ExperimentalDataAuditTrail {
     /// Internal helper function to find a mutable experimental record.
     fun find_experiment_mut(experiments: &mut vector<ExperimentData>, experiment_id: u64): &mut ExperimentData {
         let len = vector::length(experiments);
-        let mut i = 0;
+        let i = 0;
         while (i < len) {
             let exp_ref = vector::borrow_mut(experiments, i);
             if (exp_ref.id == experiment_id) {
-                return exp_ref;
+                return exp_ref
             };
             i = i + 1;
         };
-        abort 2;
+        assert!(false, EXPERIMENT_NOT_FOUND);
+        vector::borrow_mut(experiments, 0) // This line will never execute, but is needed for the compiler
     }
 }

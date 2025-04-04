@@ -1,56 +1,61 @@
-import { Types } from 'aptos';
+import { AptosClient, AptosAccount, Types } from 'aptos';
 import { Sample, SampleHistoryEvent } from './types';
+import { CONTRACT_ADDRESS, MODULE_NAMES, FUNCTIONS } from './config';
+import { createAptosClient, stringToBytes } from './aptos-client';
 
 export class SampleProvenanceContract {
-  private client: Types.AptosClient;
+  private client: AptosClient;
   private contractAddress: string;
+  private moduleName: string;
 
-  constructor(nodeUrl: string, contractAddress: string) {
-    this.client = new Types.AptosClient(nodeUrl);
+  constructor(contractAddress: string = CONTRACT_ADDRESS) {
+    this.client = createAptosClient();
     this.contractAddress = contractAddress;
+    this.moduleName = MODULE_NAMES.SAMPLE_PROVENANCE;
   }
 
   async registerSample(
-    signer: Types.AptosAccount,
+    signer: AptosAccount,
     description: string,
-    origin: string
   ): Promise<string> {
-    const payload: Types.TransactionPayload = {
-      type: "entry_function_payload",
-      function: `${this.contractAddress}::sample_provenance::register_sample`,
+    const payload: Types.EntryFunctionPayload = {
+      function: `${this.contractAddress}::${this.moduleName}::${FUNCTIONS.REGISTER_SAMPLE}`,
       type_arguments: [],
-      arguments: [description, origin]
+      arguments: [stringToBytes(description)]
     };
 
     try {
-      const txnHash = await this.client.submitTransaction(signer, payload);
-      await this.client.waitForTransaction(txnHash);
-      return txnHash;
+      const rawTxn = await this.client.generateTransaction(signer.address(), payload);
+      const signedTxn = await this.client.signTransaction(signer, rawTxn);
+      const txnResult = await this.client.submitTransaction(signedTxn);
+      await this.client.waitForTransaction(txnResult.hash);
+      return txnResult.hash;
     } catch (error) {
       console.error('Error registering sample:', error);
       throw error;
     }
   }
 
-  async recordSampleEvent(
-    signer: Types.AptosAccount,
-    sampleId: string,
-    action: string,
+  async recordTransfer(
+    signer: AptosAccount,
+    sampleId: number,
+    newOwner: string,
     details: string
   ): Promise<string> {
-    const payload: Types.TransactionPayload = {
-      type: "entry_function_payload",
-      function: `${this.contractAddress}::sample_provenance::record_event`,
+    const payload: Types.EntryFunctionPayload = {
+      function: `${this.contractAddress}::${this.moduleName}::${FUNCTIONS.RECORD_TRANSFER}`,
       type_arguments: [],
-      arguments: [sampleId, action, details]
+      arguments: [sampleId, newOwner, stringToBytes(details)]
     };
 
     try {
-      const txnHash = await this.client.submitTransaction(signer, payload);
-      await this.client.waitForTransaction(txnHash);
-      return txnHash;
+      const rawTxn = await this.client.generateTransaction(signer.address(), payload);
+      const signedTxn = await this.client.signTransaction(signer, rawTxn);
+      const txnResult = await this.client.submitTransaction(signedTxn);
+      await this.client.waitForTransaction(txnResult.hash);
+      return txnResult.hash;
     } catch (error) {
-      console.error('Error recording sample event:', error);
+      console.error('Error recording transfer:', error);
       throw error;
     }
   }
@@ -59,7 +64,7 @@ export class SampleProvenanceContract {
     try {
       const resource = await this.client.getAccountResource(
         this.contractAddress,
-        `${this.contractAddress}::sample_provenance::Sample`
+        `${this.contractAddress}::${this.moduleName}::Sample`
       );
       
       // Parse and return the sample data

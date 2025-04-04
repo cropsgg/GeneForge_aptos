@@ -1,31 +1,36 @@
-import { Types } from 'aptos';
+import { AptosClient, AptosAccount, Types } from 'aptos';
 import { WorkflowTask } from './types';
+import { CONTRACT_ADDRESS, MODULE_NAMES, FUNCTIONS } from './config';
+import { createAptosClient, stringToBytes } from './aptos-client';
 
 export class WorkflowAutomationContract {
-  private client: Types.AptosClient;
+  private client: AptosClient;
   private contractAddress: string;
+  private moduleName: string;
 
-  constructor(nodeUrl: string, contractAddress: string) {
-    this.client = new Types.AptosClient(nodeUrl);
+  constructor(contractAddress: string = CONTRACT_ADDRESS) {
+    this.client = createAptosClient();
     this.contractAddress = contractAddress;
+    this.moduleName = MODULE_NAMES.WORKFLOW_AUTOMATION;
   }
 
   async createTask(
-    signer: Types.AptosAccount,
+    signer: AptosAccount,
     description: string,
     assignee: string
   ): Promise<string> {
-    const payload: Types.TransactionPayload = {
-      type: "entry_function_payload",
-      function: `${this.contractAddress}::workflow_automation::create_task`,
+    const payload: Types.EntryFunctionPayload = {
+      function: `${this.contractAddress}::${this.moduleName}::${FUNCTIONS.CREATE_TASK}`,
       type_arguments: [],
-      arguments: [description, assignee]
+      arguments: [stringToBytes(description), assignee]
     };
 
     try {
-      const txnHash = await this.client.submitTransaction(signer, payload);
-      await this.client.waitForTransaction(txnHash);
-      return txnHash;
+      const rawTxn = await this.client.generateTransaction(signer.address(), payload);
+      const signedTxn = await this.client.signTransaction(signer, rawTxn);
+      const txnResult = await this.client.submitTransaction(signedTxn);
+      await this.client.waitForTransaction(txnResult.hash);
+      return txnResult.hash;
     } catch (error) {
       console.error('Error creating workflow task:', error);
       throw error;
@@ -33,45 +38,24 @@ export class WorkflowAutomationContract {
   }
 
   async updateTaskStatus(
-    signer: Types.AptosAccount,
-    taskId: string,
-    status: 'in_progress' | 'completed'
+    signer: AptosAccount,
+    taskId: number,
+    status: number
   ): Promise<string> {
-    const payload: Types.TransactionPayload = {
-      type: "entry_function_payload",
-      function: `${this.contractAddress}::workflow_automation::update_task_status`,
+    const payload: Types.EntryFunctionPayload = {
+      function: `${this.contractAddress}::${this.moduleName}::${FUNCTIONS.UPDATE_TASK_STATUS}`,
       type_arguments: [],
       arguments: [taskId, status]
     };
 
     try {
-      const txnHash = await this.client.submitTransaction(signer, payload);
-      await this.client.waitForTransaction(txnHash);
-      return txnHash;
+      const rawTxn = await this.client.generateTransaction(signer.address(), payload);
+      const signedTxn = await this.client.signTransaction(signer, rawTxn);
+      const txnResult = await this.client.submitTransaction(signedTxn);
+      await this.client.waitForTransaction(txnResult.hash);
+      return txnResult.hash;
     } catch (error) {
       console.error('Error updating task status:', error);
-      throw error;
-    }
-  }
-
-  async approveTask(
-    signer: Types.AptosAccount,
-    taskId: string,
-    comments: string
-  ): Promise<string> {
-    const payload: Types.TransactionPayload = {
-      type: "entry_function_payload",
-      function: `${this.contractAddress}::workflow_automation::approve_task`,
-      type_arguments: [],
-      arguments: [taskId, comments]
-    };
-
-    try {
-      const txnHash = await this.client.submitTransaction(signer, payload);
-      await this.client.waitForTransaction(txnHash);
-      return txnHash;
-    } catch (error) {
-      console.error('Error approving task:', error);
       throw error;
     }
   }
@@ -80,7 +64,7 @@ export class WorkflowAutomationContract {
     try {
       const resource = await this.client.getAccountResource(
         this.contractAddress,
-        `${this.contractAddress}::workflow_automation::Task`
+        `${this.contractAddress}::${this.moduleName}::Task`
       );
       
       return resource.data as WorkflowTask;
@@ -89,4 +73,12 @@ export class WorkflowAutomationContract {
       throw error;
     }
   }
+
+  // Task status constants
+  static readonly TASK_STATUS = {
+    PENDING: 0,
+    IN_PROGRESS: 1,
+    COMPLETED: 2,
+    APPROVED: 3
+  };
 }

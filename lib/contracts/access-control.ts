@@ -1,56 +1,39 @@
-import { Types } from 'aptos';
+import { AptosClient, AptosAccount, Types } from 'aptos';
 import { Permission } from './types';
+import { CONTRACT_ADDRESS, MODULE_NAMES, FUNCTIONS } from './config';
+import { createAptosClient } from './aptos-client';
 
 export class AccessControlContract {
-  private client: Types.AptosClient;
+  private client: AptosClient;
   private contractAddress: string;
+  private moduleName: string;
 
-  constructor(nodeUrl: string, contractAddress: string) {
-    this.client = new Types.AptosClient(nodeUrl);
+  constructor(contractAddress: string = CONTRACT_ADDRESS) {
+    this.client = createAptosClient();
     this.contractAddress = contractAddress;
+    this.moduleName = MODULE_NAMES.ACCESS_CONTROL;
   }
 
   async grantPermission(
-    signer: Types.AptosAccount,
+    signer: AptosAccount,
     userId: string,
-    resourceId: string,
-    accessLevel: 'read' | 'write' | 'admin'
+    resourceId: number,
+    accessLevel: number
   ): Promise<string> {
-    const payload: Types.TransactionPayload = {
-      type: "entry_function_payload",
-      function: `${this.contractAddress}::access_control::grant_permission`,
+    const payload: Types.EntryFunctionPayload = {
+      function: `${this.contractAddress}::${this.moduleName}::${FUNCTIONS.GRANT_PERMISSION}`,
       type_arguments: [],
       arguments: [userId, resourceId, accessLevel]
     };
 
     try {
-      const txnHash = await this.client.submitTransaction(signer, payload);
-      await this.client.waitForTransaction(txnHash);
-      return txnHash;
+      const rawTxn = await this.client.generateTransaction(signer.address(), payload);
+      const signedTxn = await this.client.signTransaction(signer, rawTxn);
+      const txnResult = await this.client.submitTransaction(signedTxn);
+      await this.client.waitForTransaction(txnResult.hash);
+      return txnResult.hash;
     } catch (error) {
       console.error('Error granting permission:', error);
-      throw error;
-    }
-  }
-
-  async revokePermission(
-    signer: Types.AptosAccount,
-    userId: string,
-    resourceId: string
-  ): Promise<string> {
-    const payload: Types.TransactionPayload = {
-      type: "entry_function_payload",
-      function: `${this.contractAddress}::access_control::revoke_permission`,
-      type_arguments: [],
-      arguments: [userId, resourceId]
-    };
-
-    try {
-      const txnHash = await this.client.submitTransaction(signer, payload);
-      await this.client.waitForTransaction(txnHash);
-      return txnHash;
-    } catch (error) {
-      console.error('Error revoking permission:', error);
       throw error;
     }
   }
@@ -62,7 +45,7 @@ export class AccessControlContract {
     try {
       const resource = await this.client.getAccountResource(
         this.contractAddress,
-        `${this.contractAddress}::access_control::Permission`
+        `${this.contractAddress}::${this.moduleName}::Permission`
       );
       
       return resource.data as Permission;
@@ -71,4 +54,11 @@ export class AccessControlContract {
       return null;
     }
   }
+
+  // Helper methods for access levels
+  static readonly ACCESS_LEVELS = {
+    READ: 1,
+    WRITE: 2,
+    ADMIN: 3
+  };
 }

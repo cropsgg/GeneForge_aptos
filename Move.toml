@@ -1,15 +1,16 @@
 [package]
-name = "Geneforge"
-version = "0.1.0"
+name = "GeneforgeContract"
+version = "1.0.0"
 authors = []
 
 [addresses]
-Geneforge = "_"
+Geneforge = "0x08e845d10bbb594fcffceb36d934a188bb84d9cdf7362e4e2522265b185127cb"
 
 [dev-addresses]
-Geneforge = "0x42"
 
-[dependencies]
-AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework/", rev = "a2a3bf58c5a5d1814c82fc3c3f7611ff3a553863" }
+[dependencies.AptosFramework]
+git = "https://github.com/aptos-labs/aptos-framework.git"
+rev = "mainnet"
+subdir = "aptos-framework"
 
-[dev-dependencies] 
+[dev-dependencies]

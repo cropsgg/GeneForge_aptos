@@ -21,32 +21,32 @@ export default function Home() {
     {
       icon: Dna,
       title: "CRISPR Cas9 Analysis",
-      description: "Advanced pattern detection and prediction for gene editing sequences"
+      description: "Pattern recognition and predictive analysis for gene editing sequences with AI assistance"
     },
     {
       icon: Database,
-      title: "Sample Provenance",
-      description: "Track biological samples with complete chain-of-custody on blockchain"
+      title: "Blockchain Verification",
+      description: "Immutable and transparent verification of genomic data and research findings"
     },
     {
       icon: FileCheck,
-      title: "Experimental Data Audit",
-      description: "Cryptographically secure experimental data with immutable audit trails"
+      title: "Data Integrity",
+      description: "Cryptographic hashing and verification to ensure experimental data remains unaltered"
     },
     {
       icon: Lock,
-      title: "Access Control",
-      description: "Role-based permissions and secure access management for sensitive data"
+      title: "Secure Collaboration",
+      description: "Role-based permissions with granular access control for sensitive genetic data"
     },
     {
       icon: Zap,
-      title: "Workflow Automation",
-      description: "Automated lab processes with compliance enforcement and notifications"
+      title: "Automated Workflows",
+      description: "Smart contract-powered automation for research compliance and experiment validation"
     },
     {
       icon: Award,
-      title: "IP Protection",
-      description: "Secure timestamping and attribution for research contributions"
+      title: "Intellectual Attribution",
+      description: "Blockchain timestamps and signatures for proper credit of scientific contributions"
     }
   ];
 
@@ -79,7 +79,7 @@ export default function Home() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.8, type: "spring" }}
             >
-              GeneForge: CRISPR Cas9 Platform
+              GeneForge: Blockchain CRISPR Platform
             </motion.h1>
             <motion.p 
               className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8"
@@ -87,7 +87,8 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.8 }}
             >
-              Advanced gene pattern detection and prediction powered by blockchain technology for secure, transparent research workflows
+              Secure genomic research with blockchain verification - enabling transparent, 
+              traceable and immutable gene editing workflows with Aptos blockchain
             </motion.p>
             <motion.div 
               className="flex flex-col sm:flex-row gap-4 justify-center"
@@ -120,7 +121,7 @@ export default function Home() {
           >
             <h2 className="text-3xl font-bold mb-4">Platform Features</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Our platform combines CRISPR Cas9 analysis with blockchain technology for secure and transparent research
+              Leveraging Aptos blockchain to bring integrity, transparency and security to CRISPR Cas9 genetic research
             </p>
           </motion.div>
 
