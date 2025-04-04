@@ -5,6 +5,16 @@ import { useInView } from 'react-intersection-observer';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Database, FlaskRound as Flask, Shield, Zap, Dna, Lock, FileCheck, Award } from 'lucide-react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+
+// Dynamically import the DnaHelixContainer with SSR disabled and error fallback
+const DnaHelixContainer = dynamic(
+  () => import('./components/3d/DnaHelixContainer').catch(() => () => null),
+  { 
+    ssr: false,
+    loading: () => <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-secondary/10" />
+  }
+);
 
 export default function Home() {
   const { scrollY } = useScroll();
@@ -54,19 +64,30 @@ export default function Home() {
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <DnaHelixContainer
+            color1="#2563eb" 
+            color2="#7c3aed"
+            count={25}
+            radius={1.5}
+            height={10}
+            autoRotateSpeed={0.3}
+            particles={40}
+          />
+        </div>
         <motion.div 
           style={{ y: y1 }}
-          className="absolute inset-0 bg-gradient-to-r from-primary/20 to-secondary/20 dark:from-primary/10 dark:to-secondary/10" 
+          className="absolute inset-0 bg-gradient-to-r from-primary/20 to-secondary/20 dark:from-primary/10 dark:to-secondary/10 z-10" 
         />
         <motion.div
           style={{ y: y2, opacity }}
-          className="absolute top-1/4 -left-20 w-60 h-60 bg-primary/30 rounded-full blur-3xl"
+          className="absolute top-1/4 -left-20 w-60 h-60 bg-primary/30 rounded-full blur-3xl z-10"
         />
         <motion.div
           style={{ y: y1, opacity }}
-          className="absolute bottom-1/4 -right-20 w-60 h-60 bg-secondary/30 rounded-full blur-3xl"
+          className="absolute bottom-1/4 -right-20 w-60 h-60 bg-secondary/30 rounded-full blur-3xl z-10"
         />
-        <div className="container mx-auto px-4 relative z-10">
+        <div className="container mx-auto px-4 relative z-20">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -74,7 +95,7 @@ export default function Home() {
             className="text-center"
           >
             <motion.h1 
-              className="text-4xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80"
+              className="text-4xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80 dna-glow dna-pulse"
               initial={{ opacity: 0, scale: 0.5 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.8, type: "spring" }}
@@ -82,7 +103,7 @@ export default function Home() {
               GeneForge: Blockchain CRISPR Platform
             </motion.h1>
             <motion.p 
-              className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8"
+              className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 dna-glow"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.8 }}
@@ -98,7 +119,7 @@ export default function Home() {
             >
               <Button size="lg" className="group magnetic-button glow-effect" asChild>
                 <Link href="/blockchain">
-                  Launch Platform
+                  Explore Blockchain
                   <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </Button>

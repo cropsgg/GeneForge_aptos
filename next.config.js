@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
+  // Comment out the 'export' output to allow server-side rendering with 'npm run start'
+  // output: 'export',
   eslint: {
     ignoreDuringBuilds: true,
   },
