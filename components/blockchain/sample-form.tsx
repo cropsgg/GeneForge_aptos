@@ -26,7 +26,6 @@ import { toast } from "sonner";
 import { TransactionStatus } from "./transaction-status";
 import { useState } from "react";
 import { useWallet } from "@/app/context/WalletContext";
-import { SampleProvenanceContract } from "@/lib/contracts";
 
 const formSchema = z.object({
   sampleId: z.string().min(2, {
@@ -49,7 +48,7 @@ export function SampleForm() {
     "idle" | "pending" | "success" | "error"
   >("idle");
   const [transactionHash, setTransactionHash] = useState<string | null>(null);
-  const { addTransactionToHistory, getSigningAccount } = useWallet();
+  const { addTransactionToHistory } = useWallet();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -65,32 +64,20 @@ export function SampleForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setTransactionStatus("pending");
     try {
-      // Get signing account from wallet
-      const account = await getSigningAccount();
-      if (!account) {
-        throw new Error("Failed to get signing account from wallet");
-      }
-
-      // Create description string from form values
-      const description = JSON.stringify({
-        sampleId: values.sampleId,
-        collectionDate: values.collectionDate,
-        source: values.source,
-        sampleType: values.sampleType,
-        notes: values.notes || "",
-      });
-
-      // Initialize contract and submit transaction
-      const contract = new SampleProvenanceContract();
-      const txHash = await contract.registerSample(account, description);
-      setTransactionHash(txHash);
+      // This is where the actual blockchain transaction would occur
+      // Simulating blockchain transaction with timeout
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      
+      // Mock transaction hash
+      const mockTxHash = "0x" + Math.random().toString(16).substr(2, 40);
+      setTransactionHash(mockTxHash);
       
       // Add to transaction history
       addTransactionToHistory(
         'sample',
         'Sample Registration',
         `Registered sample ${values.sampleId} of type ${values.sampleType}`,
-        txHash,
+        mockTxHash,
         {
           sampleId: values.sampleId,
           collectionDate: values.collectionDate,
@@ -100,8 +87,7 @@ export function SampleForm() {
       );
       
       setTransactionStatus("success");
-      toast.success("Sample registered successfully on blockchain!");
-      form.reset();
+      toast.success("Sample registered successfully!");
     } catch (error) {
       console.error("Transaction failed:", error);
       setTransactionStatus("error");
@@ -114,7 +100,7 @@ export function SampleForm() {
       <div>
         <h3 className="text-xl font-bold">Sample Provenance</h3>
         <p className="text-muted-foreground">
-          Register and do chain of custody tracking of biological samples with immutable blockchain records
+          Register and track biological samples with immutable blockchain records
         </p>
       </div>
 

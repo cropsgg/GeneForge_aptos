@@ -1,7 +1,7 @@
 import { AptosClient, AptosAccount, Types } from 'aptos';
 import { ExperimentalData } from './types';
 import { CONTRACT_ADDRESS, MODULE_NAMES, FUNCTIONS } from './config';
-import { createAptosClient, stringToBytes, executeTransaction, generatePayload } from './aptos-client';
+import { createAptosClient, stringToBytes } from './aptos-client';
 
 export class ExperimentalDataContract {
   private client: AptosClient;
@@ -19,14 +19,18 @@ export class ExperimentalDataContract {
     dataHash: string,
     description: string
   ): Promise<string> {
+    const payload: Types.EntryFunctionPayload = {
+      function: `${this.contractAddress}::${this.moduleName}::${FUNCTIONS.SUBMIT_EXPERIMENT}`,
+      type_arguments: [],
+      arguments: [stringToBytes(dataHash), stringToBytes(description)]
+    };
+
     try {
-      const payload = generatePayload(
-        this.moduleName,
-        FUNCTIONS.SUBMIT_EXPERIMENT,
-        [stringToBytes(dataHash), stringToBytes(description)]
-      );
-      
-      return await executeTransaction(this.client, signer, payload);
+      const rawTxn = await this.client.generateTransaction(signer.address(), payload);
+      const signedTxn = await this.client.signTransaction(signer, rawTxn);
+      const txnResult = await this.client.submitTransaction(signedTxn);
+      await this.client.waitForTransaction(txnResult.hash);
+      return txnResult.hash;
     } catch (error) {
       console.error('Error submitting experimental data:', error);
       throw error;
@@ -39,43 +43,35 @@ export class ExperimentalDataContract {
     newHash: string,
     description: string
   ): Promise<string> {
+    const payload: Types.EntryFunctionPayload = {
+      function: `${this.contractAddress}::${this.moduleName}::${FUNCTIONS.UPDATE_EXPERIMENT}`,
+      type_arguments: [],
+      arguments: [dataId, stringToBytes(newHash), stringToBytes(description)]
+    };
+
     try {
-      const payload = generatePayload(
-        this.moduleName,
-        FUNCTIONS.UPDATE_EXPERIMENT,
-        [dataId, stringToBytes(newHash), stringToBytes(description)]
-      );
-      
-      return await executeTransaction(this.client, signer, payload);
+      const rawTxn = await this.client.generateTransaction(signer.address(), payload);
+      const signedTxn = await this.client.signTransaction(signer, rawTxn);
+      const txnResult = await this.client.submitTransaction(signedTxn);
+      await this.client.waitForTransaction(txnResult.hash);
+      return txnResult.hash;
     } catch (error) {
       console.error('Error updating experimental data:', error);
       throw error;
     }
   }
 
-  async getExperimentById(experimentId: number): Promise<ExperimentalData | null> {
+  async getDataHistory(dataId: string): Promise<ExperimentalData> {
     try {
-      // This is a placeholder as the smart contract doesn't expose a view function yet
-      // In a real implementation, we would query the chain for the experiment data
-      // This would require adding a view function to the Move module
-      console.warn('getExperimentById is not fully implemented yet');
-      return null;
+      const resource = await this.client.getAccountResource(
+        this.contractAddress,
+        `${this.contractAddress}::${this.moduleName}::ExperimentalData`
+      );
+      
+      return resource.data as ExperimentalData;
     } catch (error) {
-      console.error('Error getting experiment:', error);
-      return null;
-    }
-  }
-
-  async getAllExperiments(): Promise<ExperimentalData[]> {
-    try {
-      // This is a placeholder as the smart contract doesn't expose a view function yet
-      // In a real implementation, we would query the chain for all experiments
-      // This would require adding a view function to the Move module
-      console.warn('getAllExperiments is not fully implemented yet');
-      return [];
-    } catch (error) {
-      console.error('Error getting experiments:', error);
-      return [];
+      console.error('Error getting data history:', error);
+      throw error;
     }
   }
 }

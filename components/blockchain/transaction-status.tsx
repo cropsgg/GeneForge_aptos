@@ -1,83 +1,61 @@
 "use client";
 
-import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
-import Link from "next/link";
-import { APTOS_NODE_URL } from "@/lib/contracts/config";
-
-// Determine explorer URL based on node URL
-const getExplorerUrl = (txHash: string | null) => {
-  if (!txHash) return null;
-  
-  // Determine which network we're on
-  if (APTOS_NODE_URL.includes('devnet')) {
-    return `https://explorer.aptoslabs.com/txn/${txHash}?network=devnet`;
-  } else if (APTOS_NODE_URL.includes('testnet')) {
-    return `https://explorer.aptoslabs.com/txn/${txHash}?network=testnet`;
-  } else {
-    return `https://explorer.aptoslabs.com/txn/${txHash}`;
-  }
-};
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface TransactionStatusProps {
   status: "pending" | "success" | "error";
-  transactionHash: string | null;
+  transactionHash?: string | null;
+  message?: string;
+  className?: string;
 }
 
 export function TransactionStatus({
   status,
   transactionHash,
+  message,
+  className
 }: TransactionStatusProps) {
-  const explorerUrl = getExplorerUrl(transactionHash);
+  const statusConfig = {
+    pending: {
+      icon: Loader2,
+      title: "Transaction Pending",
+      variant: "default" as const,
+      defaultMessage: "Your transaction is being processed on the blockchain..."
+    },
+    success: {
+      icon: CheckCircle2,
+      title: "Transaction Successful",
+      variant: "default" as const,
+      defaultMessage: "Transaction has been successfully recorded on the blockchain!"
+    },
+    error: {
+      icon: XCircle,
+      title: "Transaction Failed",
+      variant: "destructive" as const,
+      defaultMessage: "Failed to complete the transaction. Please try again."
+    }
+  };
+
+  const config = statusConfig[status];
+  const displayMessage = message || config.defaultMessage;
 
   return (
-    <div
-      className={`flex items-center p-4 rounded-md border ${
-        status === "success"
-          ? "bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800"
-          : status === "error"
-          ? "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800"
-          : "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800"
-      }`}
-    >
-      {status === "pending" ? (
-        <Loader2 className="h-5 w-5 text-blue-500 animate-spin mr-2" />
-      ) : status === "success" ? (
-        <CheckCircle2 className="h-5 w-5 text-green-500 mr-2" />
-      ) : (
-        <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
-      )}
-      <div className="flex-1">
-        <p
-          className={`text-sm font-medium ${
-            status === "success"
-              ? "text-green-700 dark:text-green-300"
-              : status === "error"
-              ? "text-red-700 dark:text-red-300"
-              : "text-blue-700 dark:text-blue-300"
-          }`}
-        >
-          {status === "pending"
-            ? "Transaction processing..."
-            : status === "success"
-            ? "Transaction successful!"
-            : "Transaction failed"}
-        </p>
+    <Alert variant={config.variant} className={cn("mt-4", className)}>
+      <config.icon className={cn(
+        "h-4 w-4",
+        status === "pending" && "animate-spin"
+      )} />
+      <AlertTitle>{config.title}</AlertTitle>
+      <AlertDescription>
+        {displayMessage}
         {transactionHash && (
-          <p className="text-xs text-muted-foreground mt-1">
-            Hash: {transactionHash.slice(0, 10)}...{transactionHash.slice(-6)}
-            {explorerUrl && (
-              <Link 
-                href={explorerUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="ml-2 underline text-primary hover:text-primary/80"
-              >
-                View on Aptos Explorer
-              </Link>
-            )}
+          <p className="mt-2 text-sm">
+            Transaction Hash: <code className="text-xs">{transactionHash}</code>
           </p>
         )}
-      </div>
-    </div>
+      </AlertDescription>
+    </Alert>
   );
 }

@@ -1,7 +1,7 @@
 // Contract configuration
-export const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '0x08e845d10bbb594fcffceb36d934a188bb84d9cdf7362e4e2522265b185127cb';
-export const APTOS_NODE_URL = process.env.NEXT_PUBLIC_APTOS_NODE_URL || 'https://fullnode.devnet.aptoslabs.com';
-export const APTOS_FAUCET_URL = process.env.NEXT_PUBLIC_APTOS_FAUCET_URL || 'https://faucet.devnet.aptoslabs.com';
+export const CONTRACT_ADDRESS = '0x08e845d10bbb594fcffceb36d934a188bb84d9cdf7362e4e2522265b185127cb';
+export const APTOS_NODE_URL = 'https://fullnode.devnet.aptoslabs.com';
+export const APTOS_FAUCET_URL = 'https://faucet.devnet.aptoslabs.com';
 
 // Module names
 export const MODULE_NAMES = {

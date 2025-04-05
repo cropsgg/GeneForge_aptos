@@ -3,16 +3,13 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { TransactionHistoryItem, getTransactionHistory, addTransaction } from '../models/history';
 import { toast } from 'sonner';
-import { AptosAccount } from 'aptos';
 
 interface WalletContextType {
   walletAddress: string | null;
   isConnecting: boolean;
   transactionHistory: TransactionHistoryItem[];
-  account: AptosAccount | null;
   connect: () => Promise<void>;
   disconnect: () => void;
-  getSigningAccount: () => Promise<AptosAccount | null>;
   addTransactionToHistory: (
     type: TransactionHistoryItem['type'],
     title: string,
@@ -40,7 +37,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [transactionHistory, setTransactionHistory] = useState<TransactionHistoryItem[]>([]);
-  const [account, setAccount] = useState<AptosAccount | null>(null);
   const [mounted, setMounted] = useState(false);
 
   // Prevent hydration mismatch
@@ -78,30 +74,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       setTransactionHistory([]);
     }
   }, [walletAddress, mounted]);
-
-  // Get a signing account for transactions
-  const getSigningAccount = async (): Promise<AptosAccount | null> => {
-    if (!walletAddress || !mounted) {
-      return null;
-    }
-
-    try {
-      // @ts-ignore - Aptos not in global types
-      if (typeof window !== 'undefined' && 'aptos' in window) {
-        // This is requesting signing capabilities from the wallet
-        // @ts-ignore
-        const response = await window.aptos.account();
-        if (response) {
-          return response;
-        }
-      }
-      return null;
-    } catch (error) {
-      console.error('Error getting signing account:', error);
-      toast.error("Failed to get signing account from wallet");
-      return null;
-    }
-  };
 
   const connect = async () => {
     if (walletAddress || !mounted) {
@@ -149,7 +121,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     if (!mounted) return;
     
     setWalletAddress(null);
-    setAccount(null);
     try {
       localStorage.removeItem('connectedWallet');
     } catch (error) {
@@ -185,10 +156,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     walletAddress,
     isConnecting,
     transactionHistory,
-    account,
     connect,
     disconnect,
-    getSigningAccount,
     addTransactionToHistory
   };
 
