@@ -1,7 +1,7 @@
 import { AptosClient, AptosAccount, Types } from 'aptos';
 import { Sample, SampleHistoryEvent } from './types';
 import { CONTRACT_ADDRESS, MODULE_NAMES, FUNCTIONS } from './config';
-import { createAptosClient, stringToBytes } from './aptos-client';
+import { createAptosClient, stringToBytes, executeTransaction, generatePayload } from './aptos-client';
 
 export class SampleProvenanceContract {
   private client: AptosClient;
@@ -18,18 +18,14 @@ export class SampleProvenanceContract {
     signer: AptosAccount,
     description: string,
   ): Promise<string> {
-    const payload: Types.EntryFunctionPayload = {
-      function: `${this.contractAddress}::${this.moduleName}::${FUNCTIONS.REGISTER_SAMPLE}`,
-      type_arguments: [],
-      arguments: [stringToBytes(description)]
-    };
-
     try {
-      const rawTxn = await this.client.generateTransaction(signer.address(), payload);
-      const signedTxn = await this.client.signTransaction(signer, rawTxn);
-      const txnResult = await this.client.submitTransaction(signedTxn);
-      await this.client.waitForTransaction(txnResult.hash);
-      return txnResult.hash;
+      const payload = generatePayload(
+        this.moduleName,
+        FUNCTIONS.REGISTER_SAMPLE,
+        [stringToBytes(description)]
+      );
+      
+      return await executeTransaction(this.client, signer, payload);
     } catch (error) {
       console.error('Error registering sample:', error);
       throw error;
@@ -42,36 +38,43 @@ export class SampleProvenanceContract {
     newOwner: string,
     details: string
   ): Promise<string> {
-    const payload: Types.EntryFunctionPayload = {
-      function: `${this.contractAddress}::${this.moduleName}::${FUNCTIONS.RECORD_TRANSFER}`,
-      type_arguments: [],
-      arguments: [sampleId, newOwner, stringToBytes(details)]
-    };
-
     try {
-      const rawTxn = await this.client.generateTransaction(signer.address(), payload);
-      const signedTxn = await this.client.signTransaction(signer, rawTxn);
-      const txnResult = await this.client.submitTransaction(signedTxn);
-      await this.client.waitForTransaction(txnResult.hash);
-      return txnResult.hash;
+      const payload = generatePayload(
+        this.moduleName,
+        FUNCTIONS.RECORD_TRANSFER,
+        [sampleId, newOwner, stringToBytes(details)]
+      );
+      
+      return await executeTransaction(this.client, signer, payload);
     } catch (error) {
       console.error('Error recording transfer:', error);
       throw error;
     }
   }
 
-  async getSampleHistory(sampleId: string): Promise<Sample> {
+  async getSampleById(sampleId: number): Promise<Sample | null> {
     try {
-      const resource = await this.client.getAccountResource(
-        this.contractAddress,
-        `${this.contractAddress}::${this.moduleName}::Sample`
-      );
-      
-      // Parse and return the sample data
-      return resource.data as Sample;
+      // This is a placeholder as the smart contract doesn't expose a view function yet
+      // In a real implementation, we would query the chain for the sample data
+      // This would require adding a view function to the Move module
+      console.warn('getSampleById is not fully implemented yet');
+      return null;
     } catch (error) {
-      console.error('Error getting sample history:', error);
-      throw error;
+      console.error('Error getting sample:', error);
+      return null;
+    }
+  }
+
+  async getAllSamples(): Promise<Sample[]> {
+    try {
+      // This is a placeholder as the smart contract doesn't expose a view function yet
+      // In a real implementation, we would query the chain for all samples
+      // This would require adding a view function to the Move module
+      console.warn('getAllSamples is not fully implemented yet');
+      return [];
+    } catch (error) {
+      console.error('Error getting samples:', error);
+      return [];
     }
   }
 }
