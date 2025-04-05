@@ -25,6 +25,7 @@ import {
 import { toast } from "sonner";
 import { TransactionStatus } from "./transaction-status";
 import { useState } from "react";
+import { useWallet } from "@/app/context/WalletContext";
 
 const formSchema = z.object({
   sampleId: z.string().min(2, {
@@ -47,6 +48,7 @@ export function SampleForm() {
     "idle" | "pending" | "success" | "error"
   >("idle");
   const [transactionHash, setTransactionHash] = useState<string | null>(null);
+  const { addTransactionToHistory } = useWallet();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -69,6 +71,20 @@ export function SampleForm() {
       // Mock transaction hash
       const mockTxHash = "0x" + Math.random().toString(16).substr(2, 40);
       setTransactionHash(mockTxHash);
+      
+      // Add to transaction history
+      addTransactionToHistory(
+        'sample',
+        'Sample Registration',
+        `Registered sample ${values.sampleId} of type ${values.sampleType}`,
+        mockTxHash,
+        {
+          sampleId: values.sampleId,
+          collectionDate: values.collectionDate,
+          sampleType: values.sampleType,
+          source: values.source
+        }
+      );
       
       setTransactionStatus("success");
       toast.success("Sample registered successfully!");

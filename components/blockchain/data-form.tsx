@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { TransactionStatus } from "./transaction-status";
 import { useState } from "react";
 import { FileText, Upload } from "lucide-react";
+import { useWallet } from "@/app/context/WalletContext";
 
 const formSchema = z.object({
   experimentId: z.string().min(2, {
@@ -50,6 +51,7 @@ export function DataForm() {
   >("idle");
   const [transactionHash, setTransactionHash] = useState<string | null>(null);
   const [fileSelected, setFileSelected] = useState(false);
+  const { addTransactionToHistory } = useWallet();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -86,6 +88,20 @@ export function DataForm() {
       // Mock transaction hash
       const mockTxHash = "0x" + Math.random().toString(16).substr(2, 40);
       setTransactionHash(mockTxHash);
+      
+      // Add to transaction history
+      addTransactionToHistory(
+        'data',
+        'Data Submission',
+        `Submitted ${values.dataType} data for experiment ${values.experimentId}`,
+        mockTxHash,
+        {
+          experimentId: values.experimentId,
+          dataType: values.dataType,
+          version: values.version,
+          fileHash: values.fileHash || 'No file hash'
+        }
+      );
       
       setTransactionStatus("success");
       toast.success("Experimental data recorded successfully!");

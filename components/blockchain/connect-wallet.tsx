@@ -2,48 +2,23 @@
 
 import { Button } from "@/components/ui/button";
 import { Wallet } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
+import { useWallet } from "@/app/context/WalletContext";
 
 export function ConnectWallet() {
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const { walletAddress, isConnecting, connect, disconnect } = useWallet();
 
-  const handleConnect = async () => {
+  const handleConnectToggle = async () => {
     if (walletAddress) {
-      // If already connected, disconnect
-      setWalletAddress(null);
-      toast.success("Wallet disconnected");
-      return;
-    }
-
-    setIsConnecting(true);
-    try {
-      // Check if Aptos wallet is available in window
-      if (typeof window !== 'undefined' && 'aptos' in window) {
-        // @ts-ignore - Aptos not in global types
-        const response = await window.aptos.connect();
-        if (response.address) {
-          setWalletAddress(response.address);
-          toast.success("Aptos wallet connected successfully!");
-        } else {
-          throw new Error("Failed to get wallet address");
-        }
-      } else {
-        toast.error("Aptos wallet extension not found. Please install Petra, Pontem, or Martian wallet");
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to connect wallet. Please try again.");
-    } finally {
-      setIsConnecting(false);
+      disconnect();
+    } else {
+      await connect();
     }
   };
 
   return (
     <div className="flex flex-col items-center gap-2">
       <Button
-        onClick={handleConnect}
+        onClick={handleConnectToggle}
         disabled={isConnecting}
         className="group magnetic-button glow-effect"
       >
