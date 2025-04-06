@@ -26,6 +26,10 @@ import { toast } from "sonner";
 import { TransactionStatus } from "./transaction-status";
 import { useState } from "react";
 import { useWallet } from "@/app/context/WalletContext";
+import { SampleProvenanceContract } from "@/lib/contracts/sample-provenance";
+import { CONTRACT_ADDRESS, MODULE_NAMES, FUNCTIONS } from "@/lib/contracts/config";
+import { stringToBytes } from "@/lib/contracts/aptos-client";
+import { Types } from "aptos";
 
 const formSchema = z.object({
   sampleId: z.string().min(2, {
@@ -48,7 +52,7 @@ export function SampleForm() {
     "idle" | "pending" | "success" | "error"
   >("idle");
   const [transactionHash, setTransactionHash] = useState<string | null>(null);
-  const { addTransactionToHistory } = useWallet();
+  const { walletAddress, isWalletConnected, submitTransaction } = useWallet();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -62,36 +66,77 @@ export function SampleForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!isWalletConnected || !walletAddress) {
+      toast.error("Please connect your wallet first");
+      return;
+    }
+    
     setTransactionStatus("pending");
     try {
-      // This is where the actual blockchain transaction would occur
-      // Simulating blockchain transaction with timeout
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Prepare the sample description as a JSON string
+      const sampleDescription = JSON.stringify({
+        id: values.sampleId,
+        collectionDate: values.collectionDate,
+        source: values.source,
+        type: values.sampleType,
+        notes: values.notes || "",
+      });
       
-      // Mock transaction hash
-      const mockTxHash = "0x" + Math.random().toString(16).substr(2, 40);
-      setTransactionHash(mockTxHash);
+      // Create the transaction payload
+      const payload: Types.EntryFunctionPayload = {
+        function: `${CONTRACT_ADDRESS}::${MODULE_NAMES.SAMPLE_PROVENANCE}::${FUNCTIONS.REGISTER_SAMPLE}`,
+        type_arguments: [],
+        arguments: [Array.from(stringToBytes(sampleDescription))]
+      };
       
-      // Add to transaction history
-      addTransactionToHistory(
-        'sample',
-        'Sample Registration',
-        `Registered sample ${values.sampleId} of type ${values.sampleType}`,
-        mockTxHash,
-        {
-          sampleId: values.sampleId,
-          collectionDate: values.collectionDate,
-          sampleType: values.sampleType,
-          source: values.source
-        }
-      );
+      // Submit the transaction
+      const result = await submitTransaction(payload);
+      
+      // Store the transaction hash
+      setTransactionHash(result.hash);
       
       setTransactionStatus("success");
-      toast.success("Sample registered successfully!");
-    } catch (error) {
+      toast.success("Sample registered successfully on the blockchain!");
+      
+      // Reset the form
+      form.reset({
+        sampleId: "",
+        collectionDate: new Date().toISOString().split("T")[0],
+        source: "",
+        sampleType: "",
+        notes: "",
+      });
+    } catch (error: any) {
       console.error("Transaction failed:", error);
       setTransactionStatus("error");
-      toast.error("Failed to register sample. Please try again.");
+      
+      // Parse the error for a more user-friendly message
+      let errorMessage = "Failed to register sample";
+      let errorDetails = "";
+      
+      if (error.code && error.message) {
+        // If it's already a parsed error
+        errorMessage = error.message;
+        errorDetails = error.actionable || error.details || "";
+      } else if (error.message) {
+        // Regular error object
+        errorMessage = error.message;
+      } else {
+        // Unknown error format
+        errorMessage = String(error);
+      }
+      
+      // Show toast with error details if available
+      if (errorDetails) {
+        toast.error(
+          <div>
+            <p className="font-medium">{errorMessage}</p>
+            <p className="text-sm mt-1">{errorDetails}</p>
+          </div>
+        );
+      } else {
+        toast.error(errorMessage);
+      }
     }
   }
 
@@ -103,6 +148,12 @@ export function SampleForm() {
           Register and track biological samples with immutable blockchain records
         </p>
       </div>
+
+      {!isWalletConnected && (
+        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-700 mb-4">
+          Please connect your wallet to register samples on the blockchain.
+        </div>
+      )}
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -219,7 +270,7 @@ export function SampleForm() {
 
           <Button 
             type="submit" 
-            disabled={transactionStatus === "pending"}
+            disabled={transactionStatus === "pending" || !isWalletConnected}
             className="w-full"
           >
             {transactionStatus === "pending" ? "Registering Sample..." : "Register Sample on Blockchain"}

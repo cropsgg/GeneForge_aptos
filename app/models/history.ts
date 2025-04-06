@@ -4,7 +4,7 @@ export interface TransactionHistoryItem {
   transactionHash: string;
   timestamp: number;
   status: 'success' | 'pending' | 'error';
-  type: 'sample' | 'data' | 'access' | 'workflow' | 'ip';
+  type: 'sample' | 'data' | 'access' | 'workflow' | 'ip' | 'contract';
   title: string;
   description: string;
   details?: Record<string, any>;
@@ -18,7 +18,8 @@ export function generateMockHistory(walletAddress: string, count: number = 5): T
     data: ['Data Submission', 'Data Update', 'Data Verification'],
     access: ['Access Grant', 'Permission Update', 'Access Revocation'],
     workflow: ['Workflow Initiation', 'Approval Step', 'Workflow Completion'],
-    ip: ['IP Registration', 'Patent Filing', 'License Grant']
+    ip: ['IP Registration', 'Patent Filing', 'License Grant'],
+    contract: ['Contract Interaction', 'Function Call', 'Registry Update']
   };
   
   return Array.from({ length: count }, (_, i) => {

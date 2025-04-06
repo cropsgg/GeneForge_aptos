@@ -1,75 +1,84 @@
 export interface Sample {
-  id: string;
+  id: number;
   description: string;
-  collectionTime: string;
-  origin: string;
-  currentOwner: string;
+  owner: string;
+  timestamp: number;
   history: SampleHistoryEvent[];
 }
 
 export interface SampleHistoryEvent {
-  timestamp: string;
-  action: string;
+  event_type: string;
   operator: string;
+  timestamp: number;
   details: string;
 }
 
 export interface ExperimentalData {
-  id: string;
-  dataHash: string;
-  version: number;
-  timestamp: string;
-  creator: string;
+  id: number;
+  hash: string;
   description: string;
-  updates: DataUpdate[];
+  experimentId: string;
+  dataType: string;
+  version: string;
+  creator: string;
+  timestamp: number;
+  history: DataUpdate[];
 }
 
 export interface DataUpdate {
-  version: number;
-  timestamp: string;
-  updater: string;
-  description: string;
-  previousHash: string;
-  newHash: string;
+  event: string;
+  operator: string;
+  timestamp: number;
 }
 
 export interface Permission {
-  resourceId: string;
-  userId: string;
-  accessLevel: 'read' | 'write' | 'admin';
-  grantedBy: string;
-  grantedAt: string;
+  user: string;
+  resource_id: number;
+  level: number;
+  granted_at: number;
+  granted_by: string;
 }
 
 export interface WorkflowTask {
-  id: string;
+  id: number;
   description: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'approved';
-  creator: string;
-  assignee: string;
-  createdAt: string;
-  approvals: Approval[];
+  owner: string;
+  status: string;
+  timestamp: number;
 }
 
-export interface Approval {
-  approver: string;
-  timestamp: string;
-  status: 'approved' | 'rejected';
-  comments: string;
+export interface WorkflowStatus {
+  status: string;
+  operator: string;
+  timestamp: number;
 }
 
 export interface IntellectualProperty {
-  id: string;
+  id: number;
   title: string;
   description: string;
-  contributors: Contributor[];
-  timestamp: string;
-  hash: string;
+  content_hash: string;
+  owner: string;
+  timestamp: number;
 }
 
-export interface Contributor {
-  address: string;
-  role: string;
-  contribution: string;
-  timestamp: string;
+// Transaction-related types
+export interface TransactionPayload {
+  function: string;
+  type_arguments: string[];
+  arguments: any[];
 }
+
+export interface TransactionResult {
+  hash: string;
+  success?: boolean;
+  vm_status?: string;
+}
+
+// Wallet-related types
+export interface WalletAccount {
+  address: string;
+  publicKey?: string;
+}
+
+export type WalletProvider = 'petra' | 'martian' | 'pontem' | 'other';

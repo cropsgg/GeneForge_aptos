@@ -5,13 +5,13 @@ import { Wallet } from "lucide-react";
 import { useWallet } from "@/app/context/WalletContext";
 
 export function ConnectWallet() {
-  const { walletAddress, isConnecting, connect, disconnect } = useWallet();
+  const { walletAddress, isConnecting, connectWallet, disconnectWallet } = useWallet();
 
   const handleConnectToggle = async () => {
     if (walletAddress) {
-      disconnect();
+      disconnectWallet();
     } else {
-      await connect();
+      await connectWallet();
     }
   };
 

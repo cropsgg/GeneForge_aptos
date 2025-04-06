@@ -7,3 +7,9 @@ profiles:
     account: 08e845d10bbb594fcffceb36d934a188bb84d9cdf7362e4e2522265b185127cb
     rest_url: "https://fullnode.devnet.aptoslabs.com"
     faucet_url: "https://faucet.devnet.aptoslabs.com"
+  testnet:
+    network: Testnet
+    private_key: ed25519-priv-0xe996a7ebcce136318b5d2413960b8206eb64189fedec39e1066b8bcb06be8a8d
+    public_key: ed25519-pub-0x8b30db66a6e5a3b6f250a496aad1e8ce494b892fa4141f3da0e541907e9cf2ff
+    account: 829554ca752584eb4e1aacfa8319a2fc90849232492550d2f1e588b24ce29c03
+    rest_url: "https://fullnode.testnet.aptoslabs.com"

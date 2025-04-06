@@ -5,6 +5,7 @@ module Geneforge::SampleProvenance {
 
     /// Error codes
     const SAMPLE_NOT_FOUND: u64 = 1;
+    const REGISTRY_NOT_INITIALIZED: u64 = 2;
 
     /// Resource representing a history event for a sample.
     struct HistoryEvent has copy, drop, store {
@@ -88,5 +89,41 @@ module Geneforge::SampleProvenance {
         };
         assert!(false, SAMPLE_NOT_FOUND);
         vector::borrow_mut(samples, 0) // This line will never execute, but is needed for the compiler
+    }
+
+    /// Get a sample by ID (read-only)
+    public fun get_sample_by_id(registry_address: address, sample_id: u64): (vector<u8>, address, u64) acquires SampleRegistry {
+        assert!(exists<SampleRegistry>(registry_address), REGISTRY_NOT_INITIALIZED);
+        let registry = borrow_global<SampleRegistry>(registry_address);
+        
+        let len = vector::length(&registry.samples);
+        let i = 0;
+        while (i < len) {
+            let sample = vector::borrow(&registry.samples, i);
+            if (sample.id == sample_id) {
+                let history_len = vector::length(&sample.history);
+                let latest_event_timestamp = 0;
+                if (history_len > 0) {
+                    let latest_event = vector::borrow(&sample.history, history_len - 1);
+                    latest_event_timestamp = latest_event.timestamp;
+                };
+                
+                return (sample.description, sample.owner, latest_event_timestamp)
+            };
+            i = i + 1;
+        };
+        
+        assert!(false, SAMPLE_NOT_FOUND);
+        (b"", @0x0, 0) // This line will never execute, but is needed for the compiler
+    }
+
+    /// Get count of samples in the registry
+    public fun get_sample_count(registry_address: address): u64 acquires SampleRegistry {
+        if (!exists<SampleRegistry>(registry_address)) {
+            return 0
+        };
+        
+        let registry = borrow_global<SampleRegistry>(registry_address);
+        vector::length(&registry.samples)
     }
 }

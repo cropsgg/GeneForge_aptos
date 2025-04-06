@@ -4,7 +4,7 @@ version = "1.0.0"
 authors = []
 
 [addresses]
-Geneforge = "0x08e845d10bbb594fcffceb36d934a188bb84d9cdf7362e4e2522265b185127cb"
+Geneforge = "0x8e845d10bbb594fcffceb36d934a188bb84d9cdf7362e4e2522265b185127cb"
 
 [dev-addresses]
 

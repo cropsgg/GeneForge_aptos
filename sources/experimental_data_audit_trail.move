@@ -5,6 +5,7 @@ module Geneforge::ExperimentalDataAuditTrail {
 
     /// Error codes
     const EXPERIMENT_NOT_FOUND: u64 = 1;
+    const REGISTRY_NOT_INITIALIZED: u64 = 2;
 
     /// Record for audit events in an experiment.
     struct HistoryRecord has copy, drop, store {
@@ -88,5 +89,41 @@ module Geneforge::ExperimentalDataAuditTrail {
         };
         assert!(false, EXPERIMENT_NOT_FOUND);
         vector::borrow_mut(experiments, 0) // This line will never execute, but is needed for the compiler
+    }
+    
+    /// Get experiment data by ID (read-only)
+    public fun get_experiment_by_id(registry_address: address, experiment_id: u64): (vector<u8>, address, u64, u64) acquires DataRegistry {
+        assert!(exists<DataRegistry>(registry_address), REGISTRY_NOT_INITIALIZED);
+        let registry = borrow_global<DataRegistry>(registry_address);
+        
+        let len = vector::length(&registry.experiments);
+        let i = 0;
+        while (i < len) {
+            let experiment = vector::borrow(&registry.experiments, i);
+            if (experiment.id == experiment_id) {
+                let history_len = vector::length(&experiment.history);
+                let latest_timestamp = 0;
+                if (history_len > 0) {
+                    let latest_record = vector::borrow(&experiment.history, history_len - 1);
+                    latest_timestamp = latest_record.timestamp;
+                };
+                
+                return (experiment.data_hash, experiment.owner, experiment.version, latest_timestamp)
+            };
+            i = i + 1;
+        };
+        
+        assert!(false, EXPERIMENT_NOT_FOUND);
+        (b"", @0x0, 0, 0) // This line will never execute, but is needed for the compiler
+    }
+    
+    /// Get count of experiments in the registry
+    public fun get_experiment_count(registry_address: address): u64 acquires DataRegistry {
+        if (!exists<DataRegistry>(registry_address)) {
+            return 0
+        };
+        
+        let registry = borrow_global<DataRegistry>(registry_address);
+        vector::length(&registry.experiments)
     }
 }

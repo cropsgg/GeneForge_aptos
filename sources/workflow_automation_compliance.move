@@ -5,6 +5,7 @@ module Geneforge::WorkflowAutomationCompliance {
 
     /// Error codes
     const TASK_NOT_FOUND: u64 = 1;
+    const REGISTRY_NOT_INITIALIZED: u64 = 2;
 
     /// Status of a workflow task.
     struct WorkflowStatus has copy, drop, store {
@@ -84,5 +85,63 @@ module Geneforge::WorkflowAutomationCompliance {
         };
         assert!(false, TASK_NOT_FOUND);
         vector::borrow_mut(tasks, 0) // This line will never execute but is needed for the compiler
+    }
+    
+    /// Get task details by ID (read-only)
+    public fun get_task_by_id(registry_address: address, task_id: u64): (vector<u8>, address, vector<u8>, u64) acquires WorkflowRegistry {
+        assert!(exists<WorkflowRegistry>(registry_address), REGISTRY_NOT_INITIALIZED);
+        let registry = borrow_global<WorkflowRegistry>(registry_address);
+        
+        let len = vector::length(&registry.tasks);
+        let i = 0;
+        while (i < len) {
+            let task = vector::borrow(&registry.tasks, i);
+            if (task.id == task_id) {
+                let history_len = vector::length(&task.status_history);
+                let current_status = b"";
+                let latest_timestamp = 0;
+                
+                if (history_len > 0) {
+                    let latest_status = vector::borrow(&task.status_history, history_len - 1);
+                    current_status = latest_status.status;
+                    latest_timestamp = latest_status.timestamp;
+                };
+                
+                return (task.description, task.owner, current_status, latest_timestamp)
+            };
+            i = i + 1;
+        };
+        
+        assert!(false, TASK_NOT_FOUND);
+        (b"", @0x0, b"", 0) // This line will never execute but is needed for the compiler
+    }
+    
+    /// Get count of workflow tasks in the registry
+    public fun get_task_count(registry_address: address): u64 acquires WorkflowRegistry {
+        if (!exists<WorkflowRegistry>(registry_address)) {
+            return 0
+        };
+        
+        let registry = borrow_global<WorkflowRegistry>(registry_address);
+        vector::length(&registry.tasks)
+    }
+    
+    /// Get count of workflow tasks by owner
+    public fun get_owner_task_count(registry_address: address, owner: address): u64 acquires WorkflowRegistry {
+        assert!(exists<WorkflowRegistry>(registry_address), REGISTRY_NOT_INITIALIZED);
+        let registry = borrow_global<WorkflowRegistry>(registry_address);
+        let len = vector::length(&registry.tasks);
+        let count = 0;
+        let i = 0;
+        
+        while (i < len) {
+            let task = vector::borrow(&registry.tasks, i);
+            if (task.owner == owner) {
+                count = count + 1;
+            };
+            i = i + 1;
+        };
+        
+        count
     }
 }

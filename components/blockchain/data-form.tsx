@@ -27,6 +27,9 @@ import { TransactionStatus } from "./transaction-status";
 import { useState } from "react";
 import { FileText, Upload } from "lucide-react";
 import { useWallet } from "@/app/context/WalletContext";
+import { CONTRACT_ADDRESS, MODULE_NAMES, FUNCTIONS } from "@/lib/contracts/config";
+import { stringToBytes } from "@/lib/contracts/aptos-client";
+import { Types } from "aptos";
 
 const formSchema = z.object({
   experimentId: z.string().min(2, {
@@ -51,7 +54,7 @@ export function DataForm() {
   >("idle");
   const [transactionHash, setTransactionHash] = useState<string | null>(null);
   const [fileSelected, setFileSelected] = useState(false);
-  const { addTransactionToHistory } = useWallet();
+  const { walletAddress, isWalletConnected, submitTransaction } = useWallet();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -69,8 +72,10 @@ export function DataForm() {
     const file = e.target.files?.[0];
     if (file) {
       setFileSelected(true);
-      // In a real implementation, we would calculate the hash of the file here
-      const mockFileHash = "0x" + Math.random().toString(16).substr(2, 40);
+      // In a production environment, we would calculate a real hash
+      const mockFileHash = "0x" + Array.from(new Uint8Array(32))
+        .map(() => Math.floor(Math.random() * 256).toString(16).padStart(2, '0'))
+        .join('');
       form.setValue("fileHash", mockFileHash);
     } else {
       setFileSelected(false);
@@ -79,36 +84,48 @@ export function DataForm() {
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!isWalletConnected || !walletAddress) {
+      toast.error("Please connect your wallet first");
+      return;
+    }
+    
+    if (!values.fileHash) {
+      toast.error("Please upload a file and generate a hash");
+      return;
+    }
+    
     setTransactionStatus("pending");
     try {
-      // This is where the actual blockchain transaction would occur
-      // Simulating blockchain transaction with timeout
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Create the transaction payload
+      const payload: Types.EntryFunctionPayload = {
+        function: `${CONTRACT_ADDRESS}::${MODULE_NAMES.EXPERIMENTAL_DATA}::${FUNCTIONS.SUBMIT_EXPERIMENT}`,
+        type_arguments: [],
+        arguments: [Array.from(stringToBytes(values.fileHash))]
+      };
       
-      // Mock transaction hash
-      const mockTxHash = "0x" + Math.random().toString(16).substr(2, 40);
-      setTransactionHash(mockTxHash);
+      // Submit the transaction
+      const result = await submitTransaction(payload);
       
-      // Add to transaction history
-      addTransactionToHistory(
-        'data',
-        'Data Submission',
-        `Submitted ${values.dataType} data for experiment ${values.experimentId}`,
-        mockTxHash,
-        {
-          experimentId: values.experimentId,
-          dataType: values.dataType,
-          version: values.version,
-          fileHash: values.fileHash || 'No file hash'
-        }
-      );
+      // Store the transaction hash
+      setTransactionHash(result.hash);
       
       setTransactionStatus("success");
-      toast.success("Experimental data recorded successfully!");
-    } catch (error) {
+      toast.success("Experimental data recorded successfully on the blockchain!");
+      
+      // Reset the form
+      form.reset({
+        experimentId: "",
+        experimentDate: new Date().toISOString().split("T")[0],
+        dataType: "",
+        dataDescription: "",
+        version: "1.0",
+        fileHash: "",
+      });
+      setFileSelected(false);
+    } catch (error: any) {
       console.error("Transaction failed:", error);
       setTransactionStatus("error");
-      toast.error("Failed to record experimental data. Please try again.");
+      toast.error(`Failed to record experimental data: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   }
 
@@ -120,6 +137,12 @@ export function DataForm() {
           Record experimental data with cryptographic hashing for integrity verification
         </p>
       </div>
+
+      {!isWalletConnected && (
+        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-700 mb-4">
+          Please connect your wallet to register experimental data on the blockchain.
+        </div>
+      )}
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -248,14 +271,17 @@ export function DataForm() {
                 control={form.control}
                 name="fileHash"
                 render={({ field }) => (
-                  <input type="hidden" {...field} />
+                  <>
+                    {field.value && (
+                      <div className="mt-4 text-sm text-muted-foreground">
+                        <p>File Hash:</p>
+                        <p className="font-mono text-xs break-all">{field.value}</p>
+                      </div>
+                    )}
+                    <input type="hidden" {...field} />
+                  </>
                 )}
               />
-              {fileSelected && (
-                <p className="text-xs text-muted-foreground mt-2">
-                  File will be hashed locally. Only the hash is stored on blockchain.
-                </p>
-              )}
             </div>
           </div>
 
@@ -268,10 +294,10 @@ export function DataForm() {
 
           <Button 
             type="submit" 
-            disabled={transactionStatus === "pending" || !fileSelected}
+            disabled={transactionStatus === "pending" || !isWalletConnected || !fileSelected}
             className="w-full"
           >
-            {transactionStatus === "pending" ? "Recording Data..." : "Record Experimental Data on Blockchain"}
+            {transactionStatus === "pending" ? "Recording Data..." : "Record Data on Blockchain"}
           </Button>
         </form>
       </Form>
